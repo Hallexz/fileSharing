@@ -1,9 +1,14 @@
 package src
 
 import (
+	"context"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+
 	"io"
 	"net/http"
-	"os"
 )
 
 func UploadFile(w http.ResponseWriter, r *http.Request) {
@@ -14,15 +19,30 @@ func UploadFile(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	f, err := os.OpenFile("./uploads/"+handler.Filename, os.O_WRONLY|os.O_CREATE, 0666)
+	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
+	client, err := mongo.Connect(context.Background(), clientOptions)
 	if err != nil {
-		http.Error(w, "Failed to create file", http.StatusInternalServerError)
+		http.Error(w, "Failed to connect to MongoDB", http.StatusInternalServerError)
 		return
 	}
-	defer f.Close()
+	defer client.Disconnect(context.Background())
 
-	if _, err := io.Copy(f, file); err != nil {
-		http.Error(w, "Failed to copy file contents", http.StatusInternalServerError)
+	collection := client.Database("mydb").Collection("files")
+
+	fileContent, err := io.ReadAll(file)
+	if err != nil {
+		http.Error(w, "Failed to read file", http.StatusInternalServerError)
+		return
+	}
+
+	doc := bson.M{
+		"filename": handler.Filename,
+		"content":  fileContent,
+	}
+
+	_, err = collection.InsertOne(context.Background(), doc)
+	if err != nil {
+		http.Error(w, "Failed to save file to MongoDB", http.StatusInternalServerError)
 		return
 	}
 
