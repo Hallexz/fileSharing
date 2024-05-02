@@ -18,12 +18,11 @@ func (a *Auth) BasicAuth(handler http.HandlerFunc) http.HandlerFunc {
 		user, pass, ok := r.BasicAuth()
 
 		if !ok || user != a.username || pass != a.password {
-			w.Header().Set("WWW-Authenticate", `Basic realm="Введите логин и пароль"`)
+			w.Header().Set("WWW-Authenticate", `Basic realm="Enter login and password"`)
 			w.WriteHeader(401)
-			w.Write([]byte("Вы не авторизованы для просмотра этой страницы.\n"))
+			w.Write([]byte("You are not authorized to view this page\n"))
 			return
 		}
-
 		handler(w, r)
 	}
 }

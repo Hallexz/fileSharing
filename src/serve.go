@@ -10,16 +10,18 @@ import (
 func ServeFiles(w http.ResponseWriter, r *http.Request) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		http.Error(w, "Не удалось получить домашнюю директорию", http.StatusInternalServerError)
+		http.Error(w, "Failed to get home directory", http.StatusInternalServerError)
 		return
 	}
-	path := r.URL.Path[len("/files/"):] // Используйте срез строки здесь
+
+	path := r.URL.Path[len("/files/"):]
 	fullPath := filepath.Join(homeDir, path)
 	info, err := os.Stat(fullPath)
 	if os.IsNotExist(err) {
 		http.NotFound(w, r)
 		return
 	}
+
 	if info.IsDir() {
 		files, err := os.ReadDir(fullPath)
 		if err != nil {
@@ -35,6 +37,7 @@ func ServeFiles(w http.ResponseWriter, r *http.Request) {
 				fmt.Fprintf(w, "%s\n", file.Name())
 			}
 		}
+
 	} else {
 		http.ServeFile(w, r, fullPath)
 	}

@@ -12,6 +12,17 @@ func Secret(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	authenticator := src.NewAuth("admin", "admin")
+
+	key := []byte("your-key-here")
+	data := []byte("your-data-here")
+
+	encryptedData, err := src.Encrypt(key, data)
+	if err != nil {
+		fmt.Println("Encryption error", err)
+		return
+	}
+	fmt.Printf("Encrypted data: %x\n", encryptedData)
+
 	http.HandleFunc("/secret", authenticator.BasicAuth(Secret))
 	http.HandleFunc("/upload", src.UploadFile)
 	http.HandleFunc("/files/", src.ServeFiles)
